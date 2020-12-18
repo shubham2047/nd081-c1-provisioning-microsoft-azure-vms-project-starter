@@ -72,6 +72,7 @@ def login():
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
             next_page = url_for('home')
+        app.logger.warning(f'{user} logged in successfully')
         return redirect(next_page)
     session["state"] = str(uuid.uuid4())
     auth_url = _build_auth_url(scopes=Config.SCOPE, state=session["state"])
@@ -97,6 +98,7 @@ def authorized():
         session["user"] = result.get("id_token_claims")
         # Note: In a real app, we'd use the 'name' property from session["user"] below
         # Here, we'll use the admin username for anyone who is authenticated by MS
+        app.logger.warning(f'{session["user"]["name"]} logged in successfully')
         user = User.query.filter_by(username="admin").first()
         login_user(user)
         _save_cache(cache)
@@ -140,6 +142,8 @@ def _build_auth_url(authority=None, scopes=None, state=None):
     # TODO: Return the full Auth Request URL with appropriate Redirect URI
     cache = _load_cache()
     cca =  _build_msal_app(cache, authority)
+    app.logger.warning(url_for('authorized', _external=True))
+    print(url_for('authorized', _external=True))
     return cca.get_authorization_request_url(
         scopes,
         state=state,
